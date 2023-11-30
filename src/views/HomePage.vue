@@ -1,28 +1,22 @@
 <template>
   <ion-page>
-    <HeaderComp />
-
     <ion-content :fullscreen="true">
       <div id="container">
-        <div>
-          <DateDisplayComp />
-        </div>
-        <ion-item>
-          <ion-select label="Ville" placeholder="Choisir" v-model="city">
-            <ion-select-option
-              v-for="c in cities"
-              :key="c.id"
-              :value="removeAccents(c.name)"
-              >{{ c.name }}</ion-select-option
-            >
-            <ion-select-option value="PA">Position actuelle</ion-select-option>
-          </ion-select>
-        </ion-item>
+        <DateDisplayComp />
+
+        <ion-select label="Ville" placeholder="Choisir" v-model="city">
+          <ion-select-option
+            v-for="c in cities"
+            :key="c.id"
+            :value="removeAccents(c.name)"
+            >{{ c.name }}</ion-select-option
+          >
+          <ion-select-option value="PA">Position actuelle</ion-select-option>
+        </ion-select>
+
         <WeatherDisplayComp :weather="weather" />
       </div>
     </ion-content>
-
-    <FooterComp />
   </ion-page>
 </template>
 
@@ -45,12 +39,11 @@ import {
 
 import HeaderComp from "@/components/HeaderComp.vue";
 import DateDisplayComp from "@/components/DateDisplayComp.vue";
-// import LocationInputComp from "@/components/LocationInputComp.vue";
 import WeatherDisplayComp from "@/components/WeatherDisplayComp.vue";
 import FooterComp from "@/components/FooterComp.vue";
 import { onMounted, reactive, ref, watch } from "vue";
 
-const apiKey = "4d8cfd4d6529e123c6d98b6f14dd977f"; // Replace with your actual API key
+const apiKey = import.meta.env.VITE_OW_API_KEY;
 const lat = ref(0);
 const lng = ref(0);
 const cities = ref([
@@ -69,6 +62,17 @@ const weather = reactive({
 
 function removeAccents(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function restoreCities() {
+  const savedCities = JSON.parse(localStorage.getItem("weatherCities"));
+  if (savedCities) {
+    cities.value = savedCities;
+  }
+}
+
+function backupCities() {
+  localStorage.setItem("weatherCities", JSON.stringify(cities.value));
 }
 
 function getPosition() {
@@ -113,28 +117,24 @@ async function getWeather() {
 // getPosition();
 
 onMounted(() => {
+  restoreCities();
   getPosition();
   watch([city, lat, lng], getWeather);
 });
 </script>
 
 <style scoped>
-/* #container {
-  text-align: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 350px;
-  transform: translateY(-50%);
-} */
-
 #container {
   text-align: center;
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 350px;
-  transform: translateY(-50%);
+  left: 5%;
+  right: 5%;
+  padding-top: 75px;
 }
 
+ion-select {
+  border-bottom: solid;
+  border-width: 1px;
+  border-color: gray;
+}
 </style>

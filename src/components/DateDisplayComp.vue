@@ -33,4 +33,7 @@ const todaysDate = computed(() => {
 </script>
 
 <style scoped>
+ion-title {
+  padding-bottom: 10px;
+}
 </style>
