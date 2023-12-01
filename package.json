@@ -21,7 +21,8 @@
     "@ionic/vue-router": "^7.0.0",
     "ionicons": "^7.0.0",
     "vue": "^3.3.0",
-    "vue-router": "^4.2.0"
+    "vue-router": "^4.2.0",
+    "vue-toastification": "^2.0.0-rc.5"
   },
   "devDependencies": {
     "@capacitor/cli": "5.5.1",

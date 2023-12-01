@@ -35,6 +35,8 @@ import {
   IonInput,
   IonSelect,
   IonSelectOption,
+  onIonViewWillEnter,
+  onIonViewDidEnter,
 } from "@ionic/vue";
 
 import HeaderComp from "@/components/HeaderComp.vue";
@@ -113,12 +115,13 @@ async function getWeather() {
     });
 }
 
-// watch(city, getWeather);
-// getPosition();
-
-onMounted(() => {
-  restoreCities();
+onIonViewWillEnter(() => {
   getPosition();
+  getWeather();
+});
+
+onIonViewDidEnter(() => {
+  restoreCities();
   watch([city, lat, lng], getWeather);
 });
 </script>

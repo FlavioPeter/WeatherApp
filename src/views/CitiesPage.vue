@@ -44,11 +44,14 @@ import {
   IonTabs,
   IonTabButton,
   alertController,
+  onIonViewWillEnter,
 } from "@ionic/vue";
 import { onMounted, ref, watch } from "vue";
+import { useToast } from "vue-toastification";
 
 const apiKey = import.meta.env.VITE_OW_API_KEY;
 const cities = ref([]);
+const toast = useToast();
 
 function restoreCities() {
   const savedCities = JSON.parse(localStorage.getItem("weatherCities"));
@@ -61,30 +64,37 @@ function backupCities() {
   localStorage.setItem("weatherCities", JSON.stringify(cities.value));
 }
 
-async function addCity(name) {
+async function getCity(name) {
   const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${name}&units=metric&lang=fr&appid=${apiKey}`;
 
   console.log(apiUrl);
 
-  fetch(apiUrl)
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      return response.json();
-    })
-    .then((data) => {
-      // Handle the retrieved city data
-      cities.value.push({
-        id: data.id,
-        name: data.name,
-      });
-      backupCities();
-    })
-    .catch((error) => {
-      // Handle errors
-      console.error("Error fetching weather data:", error);
+  return fetch(apiUrl).then((response) => {
+    if (!response.ok) {
+      return response.status;
+    }
+    return response.json();
+  });
+}
+
+async function addCity(name) {
+  const data = await getCity(name);
+  if (data === 404 || data === 400) {
+    toast.error(`Ville pas trouvé`);
+  } else if (cities.value.some((c) => data.id === c.id)) {
+    toast.warning(`${data.name} est déjà sur la liste`);
+    console.log("City already exists");
+  } else {
+    // Add logic to actually add the city to the cities array
+    cities.value.push({
+      id: data.id,
+      name: data.name,
     });
+
+    toast.success(`${data.name} a été ajoutée`);
+
+    backupCities();
+  }
 }
 
 async function addCityPopup() {
@@ -116,7 +126,7 @@ function deleteCity(cityId) {
   cities.value = cities.value.filter((c) => c.id !== cityId);
 }
 
-onMounted(() => {
+onIonViewWillEnter(() => {
   restoreCities();
   watch(cities, backupCities, { deep: true });
 });
