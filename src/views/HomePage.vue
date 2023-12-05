@@ -14,7 +14,7 @@
           <ion-select-option value="PA">Position actuelle</ion-select-option>
         </ion-select>
 
-        <WeatherDisplayComp :weather="weather" />
+        <WeatherDisplayComp v-show="weather.icon" :weather="weather" />
       </div>
     </ion-content>
   </ion-page>
@@ -23,27 +23,17 @@
 <script setup>
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
-  IonFooter,
-  IonBackButton,
-  IonButtons,
-  IonLabel,
-  IonItem,
-  IonInput,
   IonSelect,
   IonSelectOption,
   onIonViewWillEnter,
   onIonViewDidEnter,
+  loadingController,
 } from "@ionic/vue";
-
-import HeaderComp from "@/components/HeaderComp.vue";
+import { Geolocation } from "@capacitor/geolocation";
 import DateDisplayComp from "@/components/DateDisplayComp.vue";
 import WeatherDisplayComp from "@/components/WeatherDisplayComp.vue";
-import FooterComp from "@/components/FooterComp.vue";
-import { onMounted, reactive, ref, watch } from "vue";
+import { reactive, ref, watch } from "vue";
 
 const apiKey = import.meta.env.VITE_OW_API_KEY;
 const lat = ref(0);
@@ -56,10 +46,10 @@ const cities = ref([
 const city = ref("PA");
 
 const weather = reactive({
-  name: "",
-  temp: "",
-  icon: "",
-  description: "",
+  name: null,
+  temp: null,
+  icon: null,
+  description: null,
 });
 
 function removeAccents(str) {
@@ -73,17 +63,33 @@ function restoreCities() {
   }
 }
 
-function backupCities() {
-  localStorage.setItem("weatherCities", JSON.stringify(cities.value));
+async function getPosition() {
+  try {
+    const position = await Geolocation.getCurrentPosition();
+    lat.value = position.coords.latitude;
+    lng.value = position.coords.longitude;
+    console.log(lat.value, lng.value);
+  } catch (error) {
+    console.log("error in get position");
+    return;
+  }
 }
 
-function getPosition() {
-  if (navigator.geolocation) {
-    navigator.geolocation.watchPosition((position) => {
-      lat.value = position.coords.latitude;
-      lng.value = position.coords.longitude;
-    });
-  }
+async function watchPosition() {
+  await getPosition();
+  Geolocation.watchPosition(
+    () => {
+      getPosition();
+      getWeather();
+      console.log("no error in watch");
+    },
+    () => {
+      getPosition();
+      getWeather();
+      console.log("error in watch");
+    },
+    { enableHighAccuracy: false }
+  );
 }
 
 async function getWeather() {
@@ -115,14 +121,21 @@ async function getWeather() {
     });
 }
 
-onIonViewWillEnter(() => {
-  getPosition();
-  getWeather();
+onIonViewWillEnter(async () => {
+  const loading = await loadingController.create({
+    message: "Attendre SVP...",
+  });
+
+  await loading.present();
+  await getPosition();
+  await getWeather();
+  loading.dismiss();
 });
 
 onIonViewDidEnter(() => {
   restoreCities();
-  watch([city, lat, lng], getWeather);
+  watchPosition();
+  watch(city, getWeather);
 });
 </script>
 

@@ -4,7 +4,6 @@
 
 <script setup>
 import { IonTitle } from "@ionic/vue";
-
 import { computed, ref } from "vue";
 
 // Get the current date
