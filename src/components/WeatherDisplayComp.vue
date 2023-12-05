@@ -30,5 +30,6 @@ ion-img {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-bottom: 75px;
 }
 </style>

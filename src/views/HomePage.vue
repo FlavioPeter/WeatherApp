@@ -56,21 +56,12 @@ function removeAccents(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function restoreCities() {
-  const savedCities = JSON.parse(localStorage.getItem("weatherCities"));
-  if (savedCities) {
-    cities.value = savedCities;
-  }
-}
-
 async function getPosition() {
   try {
     const position = await Geolocation.getCurrentPosition();
     lat.value = position.coords.latitude;
     lng.value = position.coords.longitude;
-    console.log(lat.value, lng.value);
   } catch (error) {
-    console.log("error in get position");
     return;
   }
 }
@@ -79,14 +70,10 @@ async function watchPosition() {
   await getPosition();
   Geolocation.watchPosition(
     () => {
-      getPosition();
       getWeather();
-      console.log("no error in watch");
     },
     () => {
-      getPosition();
       getWeather();
-      console.log("error in watch");
     },
     { enableHighAccuracy: false }
   );
@@ -95,11 +82,11 @@ async function watchPosition() {
 async function getWeather() {
   let apiUrl = "";
   if (city.value === "PA") {
+    await getPosition();
     apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat.value}&lon=${lng.value}&units=metric&lang=fr&appid=${apiKey}`;
   } else {
     apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city.value}&units=metric&lang=fr&appid=${apiKey}`;
   }
-  console.log(apiUrl);
   //Fetch data from the API
   fetch(apiUrl)
     .then((response) => {
@@ -127,13 +114,11 @@ onIonViewWillEnter(async () => {
   });
 
   await loading.present();
-  await getPosition();
   await getWeather();
   loading.dismiss();
 });
 
 onIonViewDidEnter(() => {
-  restoreCities();
   watchPosition();
   watch(city, getWeather);
 });
